@@ -7,34 +7,28 @@ names <- c("blogs","twitter","news")
 dirname <- "/scratch1/masarun/nlp/data/final/en_US/en_US."
 outdir <- paste0("/scratch1/masarun/nlp/sbo/")
 
+args <- commandArgs(trailingOnly = TRUE)
+k <- as.integer(args[1])
+
 ## Get all the lines from the files
-all_lines <- c()
-
-for (name in names) {
-  fname <- paste0(dirname, name, ".txt")
-  con <- file(fname)
-  lines <- readLines(con)
-  close(con)
-
-  all_lines <- append(all_lines, lines)
-}
-
+all_lines <- readLines("split_data/test.txt")
 N <- length(all_lines)
 
+
 ## percentage of the entire lines to use for training
-percentages <- c(0.10, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99)
-k <- 4
+percentages <- c(0.10, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)
+
+
+
+test <- readLines("split_data/test.txt")
+n_test <- length(test)
 
 for (perc in percentages) {
   print(paste("Working on: ", perc))
   n <- as.integer(perc*N)
-  train_mask <- sample(c(T, F), N, prob= c(perc, 1-perc), replace=T)
-  train <- all_lines[train_mask]
-  n <- length(train)
-  test <- all_lines[-train_mask]
-  ## Fix the test size to 1000
-  n_test <- 1000
-  test <- test[1:n_test]
+  #train_mask <- sample(c(T, F), N, prob= c(perc, 1-perc), replace=T)
+  train <- all_lines[1:n]
+
 
   start <- Sys.time()
   ## Train
