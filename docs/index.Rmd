@@ -1,0 +1,162 @@
+---
+title: "Next word prediction"
+author: "Masaru Nakajima"
+date: '2023-03-02'
+output: 
+  html_document:
+      css: style.css
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+
+```
+
+
+
+# Next word prediction project
+This project is for the Data Science Capstone course by Coursera.  
+The data was provided by Coursera.
+
+## Basic summary of the data
+
+The data were three text files containing texts from three different sources.  
+
+- Twitter
+- Blogs
+- News
+
+
+```{r, message=FALSE, echo = FALSE}
+library(readr)
+library(stringr)
+library(kableExtra)
+names <- c("twitter", "blogs", "news")
+m <- length(names)
+lines <- c()
+sizes <- c()
+
+dirpath <- "/C/Users/nakaj/Documents/Coursera/Data_science_Capstone/data/final/en_US/en_US."
+for (i in 1:m) {
+  name <- names[i]
+  command <- paste0("wc -l ",dirpath, name, ".txt")
+  l <- system(command, intern=T)
+  lines[i] <- as.integer(strsplit(l, ' ')[[1]][1])
+  
+  command <- paste0("du -sh ", dirpath, name, ".txt")
+  l <- system(command, intern=T)
+  size <-  strsplit(l, '\t')[[1]][1]
+  sizes[i] <- as.integer(parse_number(size))
+  
+}
+
+
+df_size <- data.frame(file = names, lines = lines, size_MB=sizes)
+
+
+func <- function(z) if (is.numeric(z)) sum(z) else '' 
+sumrow <- as.data.frame(lapply(df_size, func))
+sumrow[1] <- "Total"
+
+df_size_sum <- rbind(df_size, sumrow)
+
+kable(df_size_sum, caption = "Data size summary", booktabs = TRUE) %>%
+  kable_styling(full_width = F)%>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) %>%
+  row_spec(dim(df_size_sum)[1], bold = T) %>% # format last row
+  column_spec(1, italic = T) # format first column
+
+```
+
+## Ngram model for next-word prediction
+
+I used the `sbo` package in R, which is the implementation of [Stupid-Backoff](https://aclanthology.org/D07-1090/) 
+model. I split the data into train (80%) and test (20%) datasets. I used n-gram model for n = 2, 3, 4, 5. 
+
+### Train dataset size vs Accuracy
+
+The folloiwng plot shows the  
+relationship between the amount of data from the train dataset used for  
+training and the accuracy of the model, for each value of n. We see that the  
+performance increases as n increases. Also, the accuracy increases as the  
+train data increases, which makes sense. However, even if we use all the  
+train data, the highest accuracy possible is about 0.5.
+
+```{r, message=FALSE, echo = FALSE}
+library(ggplot2)
+library(dplyr)
+
+df <- read.csv("C:\\Users\\nakaj\\Documents\\Coursera\\Data_Science_Capstone\\next_word\\sbo_eval_result.csv")
+df <- df[df$train_size>1000000,]
+df$ngram <- as.factor(df$ngram)
+df %>% ggplot(aes(x = train_size, y = accuracy, color=ngram)) + 
+  geom_point(size=3)+
+    theme(strip.text.y = element_text(size = 20),
+        axis.text=element_text(size=12), 
+        axis.title=element_text(size=20),strip.background = element_blank(), # remove the background
+        strip.placement = "outside", 
+        legend.text=element_text(size=15),
+        legend.title = element_text(size=20)) +
+  guides(color = guide_legend(override.aes = list(size=7)))
+```
+
+### Train dataset size vs evaluation time and predictor size
+
+While increasing n and train size improves accuracy, the price we pay is
+
+- It takes more memory to store the predictor
+- It takes more time to evaluate the test set
+- It takes more time to train the model
+
+The below figures show the result.
+
+```{r, message=FALSE, echo = FALSE, fig.height=11}
+library(ggplot2)
+library(dplyr)
+library(ggpubr)
+library(tidyr)
+
+df1 <- df %>% select(ngram, train_size, train_time, predictor_size, test_time) %>%
+  gather(key = "parameter", value = "value", -ngram, -train_size)
+
+p <- df1 %>% ggplot(aes(x = train_size, y = value)) + 
+   geom_point(aes(color = ngram), size=3) 
+
+p + facet_grid(parameter ~., scales = "free_y", switch = "y",
+               labeller = as_labeller(c(train_time = "Train time (s)", 
+                                        predictor_size = "Predictor size (MB)",
+                                        test_time  = "Evaluation time (s)"))) +
+                 ylab(NULL)+
+  theme(strip.text.y = element_text(size = 20),
+        axis.text=element_text(size=12), 
+        axis.title=element_text(size=20),strip.background = element_blank(), # remove the background
+        strip.placement = "outside", 
+        legend.text=element_text(size=15),
+        legend.title = element_text(size=20)) +
+  guides(color = guide_legend(override.aes = list(size=7)))
+
+
+```
+<!-- ## R Markdown -->
+
+<!-- This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>. -->
+
+<!-- When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this: -->
+
+<!-- ```{r cars} -->
+<!-- summary(cars) -->
+<!-- ``` -->
+
+<!-- ## Including Plots -->
+
+<!-- You can also embed plots, for example: -->
+
+<!-- ```{r pressure, echo=FALSE} -->
+<!-- plot(pressure) -->
+<!-- ``` -->
+
+<!-- Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot. -->
