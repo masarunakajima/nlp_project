@@ -14,3 +14,4 @@ is a quick way to make a next-word prediction model.
 ## Published Shiny App
 
 Check out the next-word prediction model [here](https://masarun.shinyapps.io/next_word/)!
+<iframe src="https://masarun.shinyapps.io/next_word/" width="800" height="600"></iframe>
