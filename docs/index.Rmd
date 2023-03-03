@@ -144,7 +144,8 @@ p + facet_grid(parameter ~., scales = "free_y", switch = "y",
 
 ## Shiny App Product
 
-I published a shiny app using 4-gram model. This model predicts the next word 
+I published a shiny app using 4-gram model. This model give top 3 candidates for 
+the next word 
 based on the previous 3 words. Give it a try!
 ```{r, echo = FALSE}
 knitr::include_app("https://masarun.shinyapps.io/next_word/")
