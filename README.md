@@ -9,7 +9,8 @@ Coursera capstone project in NLP
 ## What I found
 
 The next word prediction using ngram model with stupid backoff method  
-is a quick way to make a next-word prediction model. 
+is a quick way to make a next-word prediction model. You can see the summary 
+[here](https://masarunakajima.github.io/nlp_project/)!
 
 ## Published Shiny App
 
